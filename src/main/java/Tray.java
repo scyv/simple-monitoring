@@ -1,18 +1,12 @@
 import java.awt.AWTException;
-import java.awt.CheckboxMenuItem;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
-import java.awt.MenuItem;
-import java.awt.PopupMenu;
 import java.awt.RenderingHints;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
 import java.awt.image.BufferedImage;
 import java.util.List;
-import java.util.StringJoiner;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class Tray {
 
@@ -33,7 +27,7 @@ public class Tray {
         g2d = img.createGraphics();
         try {
             trayIcon = createTrayicon(img);
-            Font font = new Font("Hack NF", Font.PLAIN, 11);
+            Font font = new Font("Fira Code", Font.PLAIN, 11);
             g2d.setFont(font);
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             trayIcon.setImage(img);

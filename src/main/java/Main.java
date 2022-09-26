@@ -15,37 +15,27 @@ public class Main {
     record Link(String name, String url) {
     }
 
-    public static void main(String[] args) throws InterruptedException, IOException {
+    public static void main(String[] args) throws InterruptedException {
 
-        if (args.length ==0) {
+        if (args.length == 0) {
             System.out.println("Please provide a config json file as first parameter.");
             return;
         }
 
-        List<Link> links = new ArrayList<>();
-
-        JSONObject config = new JSONObject(Files.readString(Path.of(args[0])));
-        config.getJSONArray("links").forEach(link -> {
-            links.add(new Link(
-                    ((JSONObject) link).getString("name"),
-                    ((JSONObject) link).getString("url")));
-        });
-
-        new Main(links).monitor();
+        new Main(args[0]).monitor();
     }
 
     private final List<Link> links;
+    private final String configPath;
 
-    public Main(List<Link> links) {
-        this.links = new ArrayList<>(links);
+    public Main(String configPath) {
+        this.configPath = configPath;
+        this.links = new ArrayList<>();
+        this.readConfig();
     }
 
     public void monitor() throws InterruptedException {
-
-        log("Start monitoring: ");
-        links.forEach(link -> log(link.name + " at " + link.url));
-
-        Tray tray = new Tray();
+        Tray tray = new Tray(this::readConfig);
 
         while (true) {
             List<String> notGoodItems = new ArrayList<>();
@@ -65,7 +55,7 @@ public class Main {
                 }
             });
             tray.updateTrayIcon(notGoodItems);
-            TimeUnit.MINUTES.sleep(10);
+            TimeUnit.SECONDS.sleep(tray.getIntervalSeconds());
         }
     }
 
@@ -73,4 +63,22 @@ public class Main {
         System.out.println(LocalDateTime.now() + ": " + str);
     }
 
+    private Boolean readConfig() {
+        links.clear();
+        try {
+            JSONObject config = new JSONObject(Files.readString(Path.of(configPath)));
+            config.getJSONArray("links").forEach(link -> {
+                Link newLink = new Link(
+                        ((JSONObject) link).getString("name"),
+                        ((JSONObject) link).getString("url"));
+                links.add(newLink);
+                log(newLink.toString());
+            });
+
+            return true;
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+        return false;
+    }
 }

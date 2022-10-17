@@ -7,7 +7,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class Main {
@@ -37,15 +39,19 @@ public class Main {
     public void monitor() throws InterruptedException {
         Tray tray = new Tray(this::readConfig);
 
+        Set<String> notGoodItems = new HashSet<>();
         while (true) {
-            List<String> notGoodItems = new ArrayList<>();
             links.forEach(link -> {
                 try {
                     URL url = new URL(link.url);
                     HttpURLConnection con = (HttpURLConnection) url.openConnection();
                     con.setRequestMethod("GET");
                     int responseCode = con.getResponseCode();
-                    if (responseCode >= 400) {
+                    if (responseCode < 400) {
+                        if (notGoodItems.remove(link.name)) {
+                            log(link.name + " is back to normal: " + responseCode);
+                        }
+                    } else {
                         log(link.name + ", responseCode: " + responseCode);
                         notGoodItems.add(link.name);
                     }
@@ -54,8 +60,13 @@ public class Main {
                     notGoodItems.add(link.name);
                 }
             });
-            tray.updateTrayIcon(notGoodItems);
-            TimeUnit.SECONDS.sleep(tray.getIntervalSeconds());
+            tray.updateTrayIcon(new ArrayList<>(notGoodItems));
+            int timeout = 0;
+
+            while (timeout < (tray.getIntervalSeconds())) {
+                TimeUnit.SECONDS.sleep(1);
+                timeout++;
+            }
         }
     }
 
